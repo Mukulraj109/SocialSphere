@@ -3,7 +3,7 @@ This is learning project for backend development.
 
 ## Table of Contents
 - [Description](#description)
-- [User-Management](#User Management)
+- [User-Management](#user-management)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -40,9 +40,8 @@ Follow these steps to get the project set up on your local machine:
 
 1. **Clone the repository**: First, you will need to clone the repository to your local machine. You can do this with the following command:
 
-    ```bash
-    git clone https://github.com/Raahuldas/VidTube.git
-    ```
+   ```https://github.com/Mukulraj109/SocialSphere.git```
+   
 2. **Navigate to the project directory**: Change your current directory to the project's directory:
 
     ```bash
