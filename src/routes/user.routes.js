@@ -15,7 +15,13 @@ router.route("/register").post(upload.fields([
 router.route("/login").post(login);
 router.route("/logout").post(verifyJWT, logout)
 router.route("/refresh-access-token").post(refreshAccessToken)
-
+router.route("/change-password").post(verifyJWT, changeCurrentPassword)
+router.route("/update-user-detail").post(verifyJWT, updateUserDetail)
+router.route("/update-avatar").post(verifyJWT, upload.single("avatar"), updateAvatar)
+router.route("/update-cover-image").post(verifyJWT, upload.single("coverImage"), updateCoverImage)
+router.route("/channel/:username").get(verifyJWT, getUserChannelDetails)
+router.route("/watch-history").get(verifyJWT, getWatchHistory)
+router.route("/current-user").get(verifyJWT, getCurrentUser )
 
 
 
