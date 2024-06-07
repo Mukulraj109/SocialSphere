@@ -11,4 +11,13 @@ router.route("/register").post(upload.fields([
 ]), register);
 
 
+
+router.route("/login").post(login);
+router.route("/logout").post(verifyJWT, logout)
+router.route("/refresh-access-token").post(refreshAccessToken)
+
+
+
+
+
 export default router
