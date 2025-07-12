@@ -4,9 +4,10 @@
   "description": "\"a backend for video app\" ",
   "main": "index.js",
   "type": "module",
-  "scripts": {
-    "test": "nodemon -r dotenv/config src/index.js"
-  },
+ "scripts": {
+  "dev": "nodemon -r dotenv/config src/index.js",
+  "start": "node src/index.js"
+},
   "author": "mukul-raj",
   "license": "ISC",
   "devDependencies": {

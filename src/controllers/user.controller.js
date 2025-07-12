@@ -6,6 +6,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import JWT from "jsonwebtoken"
 import mongoose from "mongoose";
 
+
 const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -95,11 +96,12 @@ const login = asyncHandler(async (req, res) => {
         throw new ApiError(400, "password is required")
     }
 
-    const user = await User.findOne(
-        {
-            $or: [{ username }, { password }]
-        }
-    )
+    const user = await User.findOne({
+    $or: [
+      { email: email?.toLowerCase() }, 
+      { username: username }
+    ]
+  });
 
     if (!user) {
         throw new ApiError(400, "user doesnot exist")
@@ -454,5 +456,6 @@ export {
     updateUserDetail, 
     updateAvatar,
     updateCoverImage,
-    getUserChannelDetails
+    getUserChannelDetails,
+    getWatchHistory
 }
