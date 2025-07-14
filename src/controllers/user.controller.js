@@ -444,8 +444,6 @@ const updateCoverImage = asyncHandler(async (req, res) => {
 
 })
 
-
-
 export {
     register,
     login,

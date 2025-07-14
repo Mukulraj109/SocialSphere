@@ -7,19 +7,25 @@ const app = express()
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://gleaming-jalebi-5e3c20.netlify.app', 
+  'https://gleaming-jalebi-5e3c20.netlify.app'
 ];
-
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// OPTIONAL: Handle preflight requests globally
+app.options('*', cors());
+
 
 
 app.use(express.json({limit:"100mb"}));
