@@ -6,6 +6,10 @@ const router = Router();
 
 router.use(verifyJWT)
 
+router.options('*', (req, res) => {
+  res.sendStatus(200);
+});
+
 router.route("/").post(createCommunityPost);
 router.route("/all-post").get(getAllCommunityPost);
 router.route("/channel-post/:channelId").get(getChannelPost);
