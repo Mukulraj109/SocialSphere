@@ -116,11 +116,10 @@ const login = asyncHandler(async (req, res) => {
 
     const loggedInUser = await User.findById(user._id).select(" -password -refreshToken ");
 
-   const options = {
-  httpOnly: true,
-  secure: true,
-  sameSite: "None" // <-- This is the missing piece!
-};
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
 
     return res
         .status(200)
