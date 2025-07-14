@@ -7,7 +7,7 @@ const app = express()
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://gleaming-jalebi-5e3c20.netlify.app', 
+  'https://socialsphere-hub.netlify.app', 
 ];
 
 
