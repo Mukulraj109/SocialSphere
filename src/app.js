@@ -4,12 +4,23 @@ import cookieParser from "cookie-parser"
 
 const app = express()
 
-app.use(cors(
-    {
-        origin:process.env.CORS_ORIGIN,
-        credentials:true
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://gleaming-jalebi-5e3c20.netlify.app', 
+];
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-))
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
+
 
 app.use(express.json({limit:"100mb"}));
 app.use(express.urlencoded({extended:true, limit:"100mb"}));

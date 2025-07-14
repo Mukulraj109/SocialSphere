@@ -1,30 +1,33 @@
-import JWT from "jsonwebtoken"
-import { ApiError } from "../utils/ApiError.js"
-import asyncHandler from "../utils/asyncHandler.js"
+import JWT from "jsonwebtoken";
+import { ApiError } from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
-    try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
+  const token =
+    req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
-        if(!token){
-            throw new ApiError(400,"unauthorized request")
-        }
+  // Log cookies for debugging (optional, remove in prod)
+  console.log("🔐 Received cookies:", req.cookies);
 
-        const decoded = JWT.verify(token,process.env.ACCESS_TOKEN_SECRET);
+  if (!token) {
+    throw new ApiError(401, "Unauthorized request. No token provided.");
+  }
 
-        const user = await User.findById(decoded?._id)
+  try {
+    const decoded = JWT.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-        if (!user) {
-            throw new ApiError(400,"user does not exist")
-        }
-        req.user =user;
-        next();
-
-    } catch (error) {
-        throw new ApiError(500, error?.message || "Invalid access token")
+    const user = await User.findById(decoded?._id);
+    if (!user) {
+      throw new ApiError(401, "User no longer exists.");
     }
-}
-)
 
-export { verifyJWT }
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error("JWT verification failed:", error.message);
+    throw new ApiError(401, "Invalid or expired access token.");
+  }
+});
+
+export { verifyJWT };
