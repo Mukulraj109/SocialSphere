@@ -3,6 +3,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Community } from "../models/community.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
+import { Like } from "../models/like.model.js";
+
 
 const createCommunityPost = asyncHandler(async (req, res) => {
     const { content } = req.body;
@@ -26,36 +28,56 @@ const createCommunityPost = asyncHandler(async (req, res) => {
 })
 
 const getAllCommunityPost = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
 
-    const communityPost = await Community.aggregate([
-        {
-            $match: {}
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "owner",
-                foreignField: "_id",
-                as: "owner",
-                pipeline: [
-                    {
-                        $project: {
-                            username: 1,
-                            fullName: 1,
-                            avatar: 1
-                        }
-                    }
-                ]
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  // Fetch all posts with owner populated
+  const communityPosts = await Community.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullName: 1,
+              avatar: 1
             }
-        }
-    ])
-
-    if (!communityPost) {
-        throw new ApiError(400, "error while fetching posts")
+          }
+        ]
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
     }
+  ]);
 
-    return res.status(200).json(new ApiResponse(200, communityPost, "all post fetched"))
-})
+  if (!communityPosts) {
+    throw new ApiError(400, "Error while fetching posts");
+  }
+
+  // Get all post IDs liked by current user
+  const likedPostIds = await Like.find({
+    likedBy: userId,
+    community: { $ne: null }
+  }).distinct("community");
+
+  const likedSet = new Set(likedPostIds.map(id => id.toString()));
+
+  // Add `isCommunityLiked` field
+  const enrichedPosts = communityPosts.map(post => ({
+    ...post,
+    isCommunityLiked: likedSet.has(post._id.toString())
+  }));
+
+  return res.status(200).json(new ApiResponse(200, enrichedPosts, "All posts fetched"));
+});
 
 const getChannelPost = asyncHandler(async (req, res) => {
     const { channelId } = req.params;
