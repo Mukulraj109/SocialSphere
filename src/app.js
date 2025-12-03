@@ -50,5 +50,18 @@ app.use("/api/v1/communities",communityRouter);
 app.use("/api/v1/comments",commentRouter);
 app.use("/api/v1/likes",likeRouter);
 
+// Global error handler - returns JSON instead of HTML
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  return res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message,
+    errors: err.errors || [],
+  });
+});
+
 export default app;
 
