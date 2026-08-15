@@ -16,4 +16,7 @@ const communitySchema = Schema(
     }
 )
 
+communitySchema.index({ createdAt: -1 });
+communitySchema.index({ owner: 1, createdAt: -1 });
+
 export const Community = mongoose.model("Community",communitySchema)

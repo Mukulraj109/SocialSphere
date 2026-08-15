@@ -1,160 +1,120 @@
 import { Like } from "../models/like.model.js";
+import { Video } from "../models/video.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Community } from "../models/community.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { assertObjectId } from "../utils/ownership.js";
+import { getPagination, paginationMeta } from "../utils/pagination.js";
+
+async function toggleLike({ filter, createPayload }) {
+  const existing = await Like.findOne(filter);
+  if (existing) {
+    await Like.findByIdAndDelete(existing._id);
+    return false;
+  }
+
+  try {
+    await Like.create(createPayload);
+    return true;
+  } catch (error) {
+    if (error?.code === 11000) {
+      return true;
+    }
+    throw error;
+  }
+}
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
-    const { videoId } = req.params;
+  const { videoId } = req.params;
+  assertObjectId(videoId, "videoId");
 
-    if (!videoId) {
-        throw new ApiError(400, "video id is missing")
-    }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "video not found");
+  }
 
-    const isLiked = await Like.findOne(
-        {
-            video: videoId,
-            likedBy: req.user._id
-        }
-    )
+  const isVideoLiked = await toggleLike({
+    filter: { video: videoId, likedBy: req.user._id },
+    createPayload: { video: videoId, likedBy: req.user._id },
+  });
 
-    if (!isLiked) {
-        const like = await Like.create(
-            {
-                video: videoId,
-                likedBy: req.user._id
-            }
-        )
-
-        if (!like) {
-            throw new ApiError(400, "error while liking")
-        }
-    } else {
-        await Like.findByIdAndDelete(isLiked._id)
-    }
-
-    const videoLiked = await Like.findOne(
-        {
-            video: videoId,
-            likedBy: req.user._id
-        }
-    )
-
-    let isVideoLiked;
-
-    if (!videoLiked) {
-        isVideoLiked = false
-    } else {
-        isVideoLiked = true
-    }
-
-    return res.status(200).json(new ApiResponse(200, { isVideoLiked }, " video liked"))
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { isVideoLiked }, "video liked"));
+});
 
 const toggelCommentLike = asyncHandler(async (req, res) => {
-    const { commentId } = req.params;
+  const { commentId } = req.params;
+  assertObjectId(commentId, "commentId");
 
-    if (!commentId) {
-        throw new ApiError(400, "comment id is missing")
-    }
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new ApiError(404, "comment not found");
+  }
 
-    const isLiked = await Like.findOne(
-        {
-            comment: commentId,
-            likedBy: req.user._id
-        }
-    )
+  const isCommentLiked = await toggleLike({
+    filter: { comment: commentId, likedBy: req.user._id },
+    createPayload: { comment: commentId, likedBy: req.user._id },
+  });
 
-    if (!isLiked) {
-        const like = await Like.create(
-            {
-                comment: commentId,
-                likedBy: req.user._id
-            }
-        )
-        if (!like) {
-            throw new ApiError(400, "error while liking comment")
-        }
-    } else {
-        await Like.findByIdAndDelete(isLiked._id)
-    }
-
-    const commentLiked = await Like.findOne(
-        {
-            comment: commentId,
-            likedBy: req.user._id
-        }
-    )
-
-    let isCommentLiked;
-
-    if (!commentLiked) {
-        isCommentLiked = false
-    } else {
-        isCommentLiked = true
-    }
-
-    return res.status(200).json(new ApiResponse(200, { isCommentLiked }, "like status"))
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { isCommentLiked }, "like status"));
+});
 
 const toggleCommunityPostLike = asyncHandler(async (req, res) => {
-    const { postId } = req.params;
-    if (!postId) {
-        throw new ApiError(400, "post id is missing")
-    }
+  const { postId } = req.params;
+  assertObjectId(postId, "postId");
 
-    const isLiked = await Like.findOne(
-        {
-            community: postId,
-            likedBy: req.user._id
-        }
-    )
+  const post = await Community.findById(postId);
+  if (!post) {
+    throw new ApiError(404, "post not found");
+  }
 
-    if (!isLiked) {
-        const likedPost = await Like.create(
-            {
-                community: postId,
-                likedBy: req.user._id
-            }
-        )
-        if (!likedPost) {
-            throw new ApiError(400, "error while liking post")
-        }
-    } else {
-        await Like.findByIdAndDelete(isLiked._id);
-    }
+  const isCommunityLiked = await toggleLike({
+    filter: { community: postId, likedBy: req.user._id },
+    createPayload: { community: postId, likedBy: req.user._id },
+  });
 
-    const like = await Like.findOne(
-        {
-            community: postId,
-            likedBy: req.user._id
-        }
-    )
-
-    let isCommunityLiked;
-
-    if (!like) {
-        isCommunityLiked = false
-    } else {
-        isCommunityLiked = true
-    }
-
-    return res.status(200).json(new ApiResponse(200, { isCommunityLiked }, "community like status"))
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { isCommunityLiked }, "community like status"));
+});
 
 const getAllLikedVideos = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = {
+    likedBy: req.user._id,
+    video: { $ne: null },
+  };
+  const [likedVideos, total] = await Promise.all([
+    Like.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "video",
+        select: "title description thumbnail duration views owner createdAt",
+        populate: { path: "owner", select: "username fullName avatar" },
+      }),
+    Like.countDocuments(filter),
+  ]);
 
-    const likedVideos = await Like.find(
-        {
-            likedBy: req.user._id,
-            video:{$ne: null}
-        }
-    ).populate("video")
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      likedVideos,
+      "liked video fetched",
+      paginationMeta(page, limit, total)
+    )
+  );
+});
 
-    if (!likedVideos) {
-        throw new ApiError(400,"error while fetching liked videos")
-    }
-    
-    return res.status(200).json(new ApiResponse(200,likedVideos,"liked video fetched"))
-})
-
-export { toggleVideoLike, toggelCommentLike, toggleCommunityPostLike,getAllLikedVideos }
+export {
+  toggleVideoLike,
+  toggelCommentLike,
+  toggleCommunityPostLike,
+  getAllLikedVideos,
+};

@@ -54,7 +54,7 @@ Follow these steps to get the project set up on your local machine:
     npm install dotenv cloudinary mongoose mongoose-aggregate-paginate-v2 bcrypt jsonwebtoken express cors cookie-parser cloudinary multer
 
     ```
-4. **Set up environment variables**: Copy the `.env.example` file and rename it to `.env`. Then, fill in the necessary environment variables.
+4. **Set up environment variables**: Copy the `.env.sample` file and rename it to `.env`. Then, fill in the necessary environment variables.
 
 5. **Start the server**: Finally, you can start the server:
 
